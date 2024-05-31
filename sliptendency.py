@@ -1,3 +1,7 @@
+"""
+Please read the short project description before using the script
+https://github.com/giboul/sliptendency/blob/main/README.md
+"""
 from matplotlib import pyplot as plt # v3.7.0
 from matplotlib.widgets import Slider
 from matplotlib.gridspec import GridSpec
