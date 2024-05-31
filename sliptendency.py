@@ -1,4 +1,4 @@
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt # v3.7.0
 from matplotlib.widgets import Slider
 from matplotlib.gridspec import GridSpec
 import numpy as np
@@ -33,45 +33,28 @@ def stress_tendancy(stress_matrix):
     return sn, tn, Ts
 
 # ====================== Visualization ======================
-scatter_plot = False
 cmap = plt.cm.inferno
 
-# On slider change command
-def replot(args):
-    """Compute new Ts field and update 3D sphere color plot"""
-    stresses = np.array([s.val for s in sliders])
-    stress_mat = np.diag(stresses)  # stress tensor
-    s3, s2, s1 = np.sort(stresses)
-    sn, tn, Ts = stress_tendancy(stress_mat)   # Slip tendency
+fig = plt.figure()
+gs = GridSpec(15, 2, width_ratios=(1,3), figure=fig)
 
-    bounds = np.hstack((sn, tn))
-    bounds = dict(min=bounds.min(), max=bounds.max())
+axsn = fig.add_subplot(gs[5:9, 0], projection='3d', box_aspect=(1, 1, 1))
+axsn.set_xlabel(r"$x$")
+axsn.set_ylabel(r"$y$")
+axsn.set_zlabel(r"$z$")
+axsn.set_title(r"Normal stress $\sigma_n$")
 
-    sn = normalize(sn, min=bounds["min"], max=bounds["max"])
-    tn = normalize(tn, min=bounds["min"], max=bounds["max"])
-    Ts = normalize(Ts)
+axtn = fig.add_subplot(gs[11:, 0], projection='3d', box_aspect=(1, 1, 1))
+axtn.set_xlabel(r"$x$")
+axtn.set_ylabel(r"$y$")
+axtn.set_zlabel(r"$z$")
+axtn.set_title(r"Shear stress $\tau_n$")
 
-    for variable, axis, ball, title in zip(
-        (sn, tn, Ts), (axsn, axtn, axts), ballpoints, (
-                r"Normal stress $\sigma_n$",
-                r"Normal shear stress $\tau_n$",
-                "Slip-tendency $T_s/T_{s,max}$"rf" ($\phi = {(s2-s3)/(s1-s3):.2f}$)"
-            )
-    ):
-
-        if scatter_plot:
-            ball.set_color(cmap(variable.flatten()))
-        else:
-            plt.sca(axis)
-            plt.cla()
-            axis.set_title(title)
-            surf = axis.plot_surface(*positions, facecolors=cmap(variable),
-                                     rstride=1, cstride=1)
-            axis.set_xlabel(r"$x$")
-            axis.set_ylabel(r"$y$")
-            axis.set_zlabel(r"$z$")
-
-    plt.tight_layout()
+axts = fig.add_subplot(gs[:, 1], projection='3d', box_aspect=(1, 1, 1))
+axts.set_xlabel(r"$x$")
+axts.set_ylabel(r"$y$")
+axts.set_zlabel(r"$z$")
+axts.set_title(r"Slip-tendency $T_s$")
 
 
 def normalize(a: np.ndarray, min=None, max=None):  # => a in [0;1]
@@ -79,47 +62,52 @@ def normalize(a: np.ndarray, min=None, max=None):  # => a in [0;1]
         min = a.min()
     if max is None:
         max = a.max()
+    if np.isclose(min, max):
+        return np.full_like(a, min)
     return (a - min) / (max - min)
 
 
-# Figure definition
-fig = plt.figure(layout="tight")
-gs = GridSpec(9, 9, figure=fig)
+def replot(val):
+    """Compute new Ts field and update 3D sphere color plot"""
+    stresses = np.array([s.val for s in sliders])
+    stress_mat = np.diag(stresses)  # stress tensor
+    s3, s2, s1 = np.sort(stresses)
+    sn, tn, Ts = stress_tendancy(stress_mat)   # Slip tendency
 
-axsn = fig.add_subplot(gs[3:6, :2], projection='3d', box_aspect=(1, 1, 1))
-axsn.set_xlabel(r"$x$")
-axsn.set_ylabel(r"$y$")
-axsn.set_zlabel(r"$z$")
-axsn.set_title(r"Normal stress $\sigma_n$")
+    axts.set_title(
+        "Slip-tendency $T_s$ "
+        rf"($\phi = {(s2-s3)/(s1-s3):.2f}$)"
+    )
 
-axtn = fig.add_subplot(gs[6:, :2], projection='3d', box_aspect=(1, 1, 1))
-axtn.set_xlabel(r"$x$")
-axtn.set_ylabel(r"$y$")
-axtn.set_zlabel(r"$z$")
-axtn.set_title(r"Shear stress $\tau_n$")
+    for surf, cbar, v in zip(surfaces, cbars, (sn, tn, Ts)):
+        surf.set_facecolor(cmap(normalize(v)[:-1,:-1].flatten()))
+        cbar.set_ticklabels((f"{v.min():.5n}", f"{v.max():.5n}"))
 
-axts = fig.add_subplot(gs[:, 2:], projection='3d', box_aspect=(1, 1, 1))
-axts.set_xlabel(r"$x$")
-axts.set_ylabel(r"$y$")
-axts.set_zlabel(r"$z$")
-axts.set_title(r"Slip-tendency $T_s$")
 
 # Defining sliders
 sliders = []
 for i, direction in enumerate("xyz"):
-    axs = fig.add_subplot(gs[i, :2])
+    axs = fig.add_subplot(gs[i, 0])
     axs.axis('off')
     s = Slider(axs, label=rf"$\sigma_{direction}$",
                valmin=1e-10, valmax=100, valinit=0.)
     s.on_changed(replot)
     sliders.append(s)
+# Initialize surface plots
+surfaces = [
+    ax.plot_surface(*positions,
+                    rstride=1,
+                    cstride=1,
+                    facecolors=cmap(np.full_like(alpha, 0.)),
+                    linewidth=0,
+                    cmap=cmap)
+    for ax in (axsn, axtn, axts)
+]
+# Colorbars
+cbars = []
+for ax, surf in zip((axsn, axtn, axts), surfaces):
+    cbar = plt.colorbar(surf, ax=ax)
+    cbar.set_ticks((0, 1))
+    cbars.append(cbar)
 
-# Initial plot
-if scatter_plot:
-    ballsn = axsn.scatter(*positions, alpha=1, s=100)
-    balltn = axtn.scatter(*positions, alpha=1, s=100)
-    ballts = axts.scatter(*positions, alpha=1, s=100)
-    ballpoints = [ballsn, balltn, ballts]
-else:
-    ballpoints = [None for s in sliders]
 plt.show()
