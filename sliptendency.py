@@ -36,7 +36,7 @@ def stress_tendancy(stress_matrix):
 scatter_plot = False
 cmap = plt.cm.inferno
 
-
+# On slider change command
 def replot(args):
     """Compute new Ts field and update 3D sphere color plot"""
     stresses = np.array([s.val for s in sliders])
@@ -52,7 +52,7 @@ def replot(args):
     Ts = normalize(Ts)
 
     for variable, axis, ball, title in zip(
-        (sn, tn, Ts), ballaxes, ballpoints, (
+        (sn, tn, Ts), (axsn, axtn, axts), ballpoints, (
                 r"Normal stress $\sigma_n$",
                 r"Normal shear stress $\tau_n$",
                 "Slip-tendency $T_s/T_{s,max}$"rf" ($\phi = {(s2-s3)/(s1-s3):.2f}$)"
@@ -82,6 +82,7 @@ def normalize(a: np.ndarray, min=None, max=None):  # => a in [0;1]
     return (a - min) / (max - min)
 
 
+# Figure definition
 fig = plt.figure(layout="tight")
 gs = GridSpec(9, 9, figure=fig)
 
@@ -103,8 +104,7 @@ axts.set_ylabel(r"$y$")
 axts.set_zlabel(r"$z$")
 axts.set_title(r"Slip-tendency $T_s$")
 
-ballaxes = [axsn, axtn, axts]
-
+# Defining sliders
 sliders = []
 for i, direction in enumerate("xyz"):
     axs = fig.add_subplot(gs[i, :2])
@@ -114,14 +114,12 @@ for i, direction in enumerate("xyz"):
     s.on_changed(replot)
     sliders.append(s)
 
+# Initial plot
 if scatter_plot:
     ballsn = axsn.scatter(*positions, alpha=1, s=100)
     balltn = axtn.scatter(*positions, alpha=1, s=100)
     ballts = axts.scatter(*positions, alpha=1, s=100)
     ballpoints = [ballsn, balltn, ballts]
 else:
-    surf = axts.plot_surface(*positions, rstride=1, cstride=1,
-                             facecolors=cmap(normalize(alpha)), cmap=cmap)
-    clb = fig.colorbar(surf)
     ballpoints = [None for s in sliders]
 plt.show()
