@@ -2,7 +2,7 @@
 Please read the short project description before using the script
 https://github.com/giboul/sliptendency/blob/main/README.md
 """
-from matplotlib import pyplot as plt # v3.7.0
+from matplotlib import pyplot as plt
 from matplotlib.widgets import Slider
 from matplotlib.gridspec import GridSpec
 import numpy as np
@@ -32,7 +32,6 @@ def stress_tendancy(stress_matrix):
     Ts = np.full_like(sn, float('nan'))
     mask = ~ np.isclose(tnorm, 0)
     Ts[mask] = tn[mask]/sn[mask]  # Ts = tau_n / sigma_n
-    Ts = tn / sn
 
     return sn, tn, Ts
 
