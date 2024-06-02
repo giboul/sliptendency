@@ -16,7 +16,7 @@ positions = np.array((np.sin(beta)*np.cos(alpha),  # X
                       np.cos(beta)))  # Z
 
 
-def stress_tendancy(stress_matrix):
+def slip_tendancy(stress_matrix):
     """Compute the stress tendency distrbution over a sphere from a 3x3 stress matrix"""
 
     t = np.einsum('ij,ikl->jkl', stress_matrix, positions)  # t = stress_matrix @ n
@@ -75,7 +75,7 @@ def replot(val):
     stresses = np.array([s.val for s in sliders])
     stress_mat = np.diag(stresses)  # stress tensor
     s3, s2, s1 = np.sort(stresses)
-    sn, tn, Ts = stress_tendancy(stress_mat)   # Slip tendency
+    sn, tn, Ts = slip_tendancy(stress_mat)   # Slip tendency
 
     axts.set_title(
         "Slip-tendency $T_s$ "
