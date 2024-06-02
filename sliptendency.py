@@ -84,7 +84,7 @@ def replot(val):
     )
 
     for surf, cbar, v in zip(surfaces, cbars, (sn, tn, Ts)):
-        surf.set_facecolor(cmap(normalize(v)[:-1,:-1].flatten()))
+        surf.set_color(cmap(normalize(v)[:-1, :-1].flatten()))
         cbar.set_ticklabels((f"{v.min():.5n}", f"{v.max():.5n}"))
 
 
@@ -103,7 +103,6 @@ surfaces = [
                     rstride=1,
                     cstride=1,
                     facecolors=cmap(np.full_like(alpha, 0.)),
-                    linewidth=0,
                     cmap=cmap)
     for ax in (axsn, axtn, axts)
 ]
